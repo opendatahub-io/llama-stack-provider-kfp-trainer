@@ -1,0 +1,19 @@
+version: '2'
+image_name: kfp-torchtune
+apis:
+- datasetio
+- post_training
+providers:
+  post_training:
+  - provider_id: kfp-torchtune
+    provider_type: remote::kfp-torchtune
+    config: {}
+  datasetio:
+  - provider_id: huggingface
+    provider_type: remote::huggingface
+    config:
+      kvstore:
+        type: sqlite
+        namespace: null
+        db_path: ${env.SQLITE_STORE_DIR:~/.llama/distributions/fireworks}/huggingface_datasetio.db
+external_providers_dir: ./providers.d

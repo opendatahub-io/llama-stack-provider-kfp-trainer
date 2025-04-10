@@ -3,9 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
-
 # Distribution / packaging
 .Python
 build/
@@ -129,7 +126,7 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+.venv*
 env/
 venv/
 ENV/
@@ -172,3 +169,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# kfp
+local_outputs
