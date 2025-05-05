@@ -8,10 +8,8 @@ This is not meant to be a pattern to use in case this approach is used for
 production needs. This approach is to limit the scope of changes and better
 showcase Kubeflow Pipelines.
 
-This provider also uses the `scheduler` module to run `async` tasks. This
-module is proposed in upstream
-[here](https://github.com/meta-llama/llama-stack/pull/1437). Once it's merged
-in upstream, this provider will switch to use it.
+This provider also uses the `scheduler` module to run `async` tasks. It extends
+it with additional features.
 
 
 ## Execution flow
