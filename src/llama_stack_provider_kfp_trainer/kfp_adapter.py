@@ -37,8 +37,8 @@ class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
         super().__init__(*args, **kwargs)
 
         # TODO: make it configurable
-        #self._mode = PipelineMode.LOCAL
-        self._mode = PipelineMode.REMOTE
+        self._mode = PipelineMode.LOCAL
+        #self._mode = PipelineMode.REMOTE
         self._scheduler = Scheduler(backend=f"kfp-{self._mode.value}", to_artifacts=self._to_artifacts)
 
     async def shutdown(self) -> None:
