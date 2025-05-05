@@ -29,6 +29,7 @@ training_config = post_training_supervised_fine_tune_params.TrainingConfig(
         dataset_id=simpleqa_dataset_id,
         shuffle=True,
     ),
+    efficiency_config=post_training_supervised_fine_tune_params.TrainingConfigEfficiencyConfig(),
     gradient_accumulation_steps=1,
     max_steps_per_epoch=1,
     max_validation_steps=1,
