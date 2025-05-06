@@ -3,7 +3,7 @@
 # This script is used to create a virtual environment for the Llama Stack KFP Trainer
 
 python3 -m venv .venv
-source .venv/bin/activate
+. .venv/bin/activate
 pip install --upgrade pip
 pip install -e .
 
