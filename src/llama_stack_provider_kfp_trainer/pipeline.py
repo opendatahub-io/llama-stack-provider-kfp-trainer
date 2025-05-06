@@ -17,7 +17,9 @@ from llama_stack.apis.post_training import (
 )
 from llama_stack.apis.datatypes import Api
 from llama_stack.distribution.distribution import get_provider_registry
-from llama_stack.providers.inline.post_training.torchtune.config import TorchtunePostTrainingConfig
+from llama_stack.providers.inline.post_training.torchtune.config import (
+    TorchtunePostTrainingConfig,
+)
 
 from .provider import get_provider_spec
 
@@ -27,11 +29,13 @@ class PipelineMode(enum.Enum):
     REMOTE = "remote"
 
 
-def _get_provider_pip_dependencies(api_type: Api, provider_name: str| None = None) -> list[str]:
+def _get_provider_pip_dependencies(
+    api_type: Api, provider_name: str | None = None
+) -> list[str]:
     deps = [
         # TODO: how to achieve identical llama-stack code on both sides?
         "git+https://github.com/meta-llama/llama-stack.git@main#egg=llama-stack",
-    ] # always install the base package
+    ]  # always install the base package
     # TODO: get_provider_registry should return external providers too?
     provider_registry = get_provider_registry() | {
         Api.post_training: {
@@ -54,22 +58,26 @@ def _get_provider_pip_dependencies(api_type: Api, provider_name: str| None = Non
 _BASE_IMAGE = "quay.io/fedora/python-311:311"
 
 
-def lls_component(api_type: Api, provider_name: str| None = None):
+def lls_component(api_type: Api, provider_name: str | None = None):
     def decorator(func):
         def wrapper(*args, **kwargs):
             return dsl.component(
                 base_image=_BASE_IMAGE,
                 func=func,
-                packages_to_install=_get_provider_pip_dependencies(api_type, provider_name)
+                packages_to_install=_get_provider_pip_dependencies(
+                    api_type, provider_name
+                ),
             )(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 @lls_component(Api.post_training, "kfp-torchtune")
 def component(
     config: dict,
-    data: list, # should be an Input?
+    data: list,  # should be an Input?
     job_uuid: str,
     training_config: dict,
     hyperparam_search_config: dict,
@@ -97,7 +105,9 @@ def component(
     from functools import partial
     from torchtune.data import padded_collate_sft
     from llama_stack.providers.inline.post_training.torchtune.common import utils
-    from llama_stack.providers.inline.post_training.torchtune.datasets.sft import SFTDataset
+    from llama_stack.providers.inline.post_training.torchtune.datasets.sft import (
+        SFTDataset,
+    )
     from torch.utils.data import DataLoader, DistributedSampler
 
     class MyLoraFinetuningSingleDevice(LoraFinetuningSingleDevice):
@@ -147,10 +157,10 @@ def component(
 
     #### End of monkey patching
 
-
     # Extract checkpoint from passed artifact
     import os
     import tarfile
+
     model_dir = os.path.dirname(model_artifact.path)
 
     dest_dir = os.path.join(model_dir, "model_artifact")
@@ -175,6 +185,7 @@ def component(
     )
 
     import asyncio
+
     asyncio.run(recipe.setup())
     resources_allocated, checkpoints = asyncio.run(recipe.train())
 
@@ -183,16 +194,17 @@ def component(
         return obj.model_dump(exclude_none=True, mode="json")
 
     output.metadata = {
-        'resources_allocated': resources_allocated,
-        'checkpoints': [],
+        "resources_allocated": resources_allocated,
+        "checkpoints": [],
     }
 
     # Copy checkpoint files to pipeline artifacts
     import shutil
+
     for checkpoint in checkpoints:
         chk = checkpoint.model_copy()
         chk.path = f"{output.path}/{checkpoint.identifier}"
-        output.metadata['checkpoints'].append(_serialize(chk))
+        output.metadata["checkpoints"].append(_serialize(chk))
         # TODO: handle any errors
         shutil.copytree(checkpoint.path, chk.path)
 
@@ -214,7 +226,7 @@ def pipeline(
     hyperparam_search_config: dict,
     logger_config: dict,
     model: str,
-    checkpoint_dir: str, # TODO: remove the input argument
+    checkpoint_dir: str,  # TODO: remove the input argument
     algorithm_config: LoraFinetuningConfig,
 ):
     # TODO: pass it through artifact to avoid issues with size
