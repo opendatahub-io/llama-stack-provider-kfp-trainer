@@ -1,4 +1,4 @@
 #!/bin/sh
 
-source .venv/bin/activate
+. .venv/bin/activate
 llama stack run run.yaml

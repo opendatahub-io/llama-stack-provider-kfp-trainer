@@ -1,0 +1,51 @@
+name: End-to-End Server Startup
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  start-server:
+    name: Start Server on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up environment (venv)
+        run: |
+          ./scripts/prepare-venv.sh
+
+      - name: Start server
+        run: |
+          ./scripts/run-server.sh > server.log 2>&1 &
+
+      - name: Wait for Llama Stack server to be ready
+        run: |
+          echo "Waiting for Llama Stack server..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8321/v1/health | grep -q "OK"; then
+              echo "Llama Stack server is up!"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Llama Stack server failed to start"
+          cat server.log
+          exit 1
+
+      - name: Stop server
+        if: always()
+        run: |
+          pkill -f run-server.sh || true
