@@ -57,7 +57,6 @@ class _KFPLocalSchedulerBackend(_KFPSchedulerBackendBase):
 
 
 class _KFPRemoteSchedulerBackend(_KFPSchedulerBackendBase):
-
     # stolen from: https://github.com/meta-llama/llama-stack/compare/main...cdoern:llama-stack:ilab-dsp
     # TODO: confirm the source of the code
     # TODO: check if all this code is really needed - doesn't kfp library provide a simpler interface?
@@ -70,7 +69,6 @@ class _KFPRemoteSchedulerBackend(_KFPSchedulerBackendBase):
         from kubernetes.config import list_kube_config_contexts
         from kubernetes.config.config_exception import ConfigException
         from kubernetes.config.kube_config import load_kube_config
-
 
         config = Configuration()
         try:
@@ -147,7 +145,9 @@ class _KFPRemoteSchedulerBackend(_KFPSchedulerBackendBase):
                     case "FAILED" | "CANCELED" | "SKIPPED":
                         on_status_change_cb(JobStatus.failed)
                     case "RUNNING":
-                        logger.info(f"Job {job.id} (kfp: {job.provider_id}) is still running")
+                        logger.info(
+                            f"Job {job.id} (kfp: {job.provider_id}) is still running"
+                        )
                     case _:
                         logger.warning(f"Unhandled run state: {run.state}")
 
@@ -162,7 +162,9 @@ scheduler._BACKENDS["kfp-local"] = _KFPLocalSchedulerBackend
 scheduler._BACKENDS["kfp-remote"] = _KFPRemoteSchedulerBackend
 
 
-def _get_backend_impl(backend: str, to_artifacts: Callable[[Any], list[JobArtifact]] | None = None):
+def _get_backend_impl(
+    backend: str, to_artifacts: Callable[[Any], list[JobArtifact]] | None = None
+):
     try:
         if to_artifacts is not None:
             return scheduler._BACKENDS[backend](to_artifacts=to_artifacts)
@@ -172,7 +174,11 @@ def _get_backend_impl(backend: str, to_artifacts: Callable[[Any], list[JobArtifa
 
 
 class Scheduler(scheduler.Scheduler):
-    def __init__(self, backend: str = "naive", to_artifacts: Callable[[Any], list[JobArtifact]] | None = None):
+    def __init__(
+        self,
+        backend: str = "naive",
+        to_artifacts: Callable[[Any], list[JobArtifact]] | None = None,
+    ):
         # TODO: if server crashes, job states are lost; we need to persist jobs on disc
         self._jobs: dict[JobID, Job] = {}
         self._backend = _get_backend_impl(backend, to_artifacts)

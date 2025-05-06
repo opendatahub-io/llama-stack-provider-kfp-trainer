@@ -3,8 +3,12 @@ from typing import Any
 
 from llama_stack.distribution.datatypes import Api
 
-from llama_stack.providers.inline.post_training.torchtune.post_training import TorchtunePostTrainingImpl
-from llama_stack.providers.inline.post_training.torchtune.config import TorchtunePostTrainingConfig
+from llama_stack.providers.inline.post_training.torchtune.post_training import (
+    TorchtunePostTrainingImpl,
+)
+from llama_stack.providers.inline.post_training.torchtune.config import (
+    TorchtunePostTrainingConfig,
+)
 from llama_stack.apis.post_training import (
     AlgorithmConfig,
     Checkpoint,
@@ -38,8 +42,10 @@ class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
 
         # TODO: make it configurable
         self._mode = PipelineMode.LOCAL
-        #self._mode = PipelineMode.REMOTE
-        self._scheduler = Scheduler(backend=f"kfp-{self._mode.value}", to_artifacts=self._to_artifacts)
+        # self._mode = PipelineMode.REMOTE
+        self._scheduler = Scheduler(
+            backend=f"kfp-{self._mode.value}", to_artifacts=self._to_artifacts
+        )
 
     async def shutdown(self) -> None:
         await self._scheduler.shutdown()
@@ -48,9 +54,11 @@ class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
     def _to_artifacts(cls, in_artifact) -> list[JobArtifact]:
         return [
             cls._checkpoint_to_artifact(Checkpoint.model_validate(checkpoint))
-            for checkpoint in in_artifact.metadata['checkpoints']
+            for checkpoint in in_artifact.metadata["checkpoints"]
         ] + [
-            cls._resources_stats_to_artifact(in_artifact.metadata['resources_allocated'])
+            cls._resources_stats_to_artifact(
+                in_artifact.metadata["resources_allocated"]
+            )
         ]
 
     @staticmethod
@@ -106,24 +114,36 @@ class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
 
     async def get_training_jobs(self) -> ListPostTrainingJobsResponse:
         return ListPostTrainingJobsResponse(
-            data=[PostTrainingJob(job_uuid=job.id) for job in self._scheduler.get_jobs()]
+            data=[
+                PostTrainingJob(job_uuid=job.id) for job in self._scheduler.get_jobs()
+            ]
         )
 
     @staticmethod
     def _get_artifacts_metadata_by_type(job, artifact_type):
-        return [artifact.metadata for artifact in job.artifacts if artifact.type == artifact_type]
+        return [
+            artifact.metadata
+            for artifact in job.artifacts
+            if artifact.type == artifact_type
+        ]
 
     @classmethod
     def _get_checkpoints(cls, job):
-        return cls._get_artifacts_metadata_by_type(job, TrainingArtifactType.CHECKPOINT.value)
+        return cls._get_artifacts_metadata_by_type(
+            job, TrainingArtifactType.CHECKPOINT.value
+        )
 
     @classmethod
     def _get_resources_allocated(cls, job):
-        data = cls._get_artifacts_metadata_by_type(job, TrainingArtifactType.RESOURCES_STATS.value)
+        data = cls._get_artifacts_metadata_by_type(
+            job, TrainingArtifactType.RESOURCES_STATS.value
+        )
         return data[0] if data else None
 
     @webmethod(route="/post-training/job/status")
-    async def get_training_job_status(self, job_uuid: str) -> PostTrainingJobStatusResponse | None:
+    async def get_training_job_status(
+        self, job_uuid: str
+    ) -> PostTrainingJobStatusResponse | None:
         job = self._scheduler.get_job(job_uuid)
 
         match job.status:
@@ -154,10 +174,16 @@ class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
         self._scheduler.cancel(job_uuid)
 
     @webmethod(route="/post-training/job/artifacts")
-    async def get_training_job_artifacts(self, job_uuid: str) -> PostTrainingJobArtifactsResponse | None:
+    async def get_training_job_artifacts(
+        self, job_uuid: str
+    ) -> PostTrainingJobArtifactsResponse | None:
         job = self._scheduler.get_job(job_uuid)
-        return PostTrainingJobArtifactsResponse(job_uuid=job_uuid, checkpoints=self._get_checkpoints(job))
+        return PostTrainingJobArtifactsResponse(
+            job_uuid=job_uuid, checkpoints=self._get_checkpoints(job)
+        )
 
 
 async def get_adapter_impl(config: TorchtunePostTrainingConfig, _deps):
-    return TorchtuneKFPPostTrainingImpl(config, _deps[Api.datasetio], _deps[Api.datasets])
+    return TorchtuneKFPPostTrainingImpl(
+        config, _deps[Api.datasetio], _deps[Api.datasets]
+    )

@@ -3,9 +3,13 @@ import time
 import uuid
 
 from llama_stack_client import LlamaStackClient
+from llama_stack_client.types import (
+    post_training_supervised_fine_tune_params,
+)
+from llama_stack_client.types.algorithm_config_param import LoraFinetuningConfig
 
 
-client = LlamaStackClient(base_url=f"http://localhost:8321")
+client = LlamaStackClient(base_url="http://localhost:8321")
 
 simpleqa_dataset_id = "huggingface::simpleqa1"
 _ = client.datasets.register(
@@ -17,10 +21,6 @@ _ = client.datasets.register(
     dataset_id=simpleqa_dataset_id,
 )
 
-
-from llama_stack_client.types import (
-    post_training_supervised_fine_tune_params,
-)
 
 training_config = post_training_supervised_fine_tune_params.TrainingConfig(
     data_config=post_training_supervised_fine_tune_params.TrainingConfigDataConfig(
@@ -42,18 +42,16 @@ training_config = post_training_supervised_fine_tune_params.TrainingConfig(
     ),
 )
 
-from llama_stack_client.types.algorithm_config_param import LoraFinetuningConfig
-
 algorithm_config = LoraFinetuningConfig(
     alpha=1,
     apply_lora_to_mlp=True,
     apply_lora_to_output=False,
-    lora_attn_modules=['q_proj'],
+    lora_attn_modules=["q_proj"],
     rank=1,
     type="LoRA",
 )
 
-job_uuid = f'test-job{uuid.uuid4()}'
+job_uuid = f"test-job{uuid.uuid4()}"
 training_model = os.environ["INFERENCE_MODEL"]
 
 start_time = time.time()
@@ -64,7 +62,7 @@ response = client.post_training.supervised_fine_tune(
     hyperparam_search_config={},
     training_config=training_config,
     algorithm_config=algorithm_config,
-    checkpoint_dir="null", # API claims it's not needed but - 400 if not passed.
+    checkpoint_dir="null",  # API claims it's not needed but - 400 if not passed.
 )
 
 print("Job: ", job_uuid)
@@ -85,6 +83,5 @@ while True:
 end_time = time.time()
 print("Job completed in", end_time - start_time, "seconds!")
 
-print('Artifacts:')
+print("Artifacts:")
 print(client.post_training.job.artifacts(job_uuid=job_uuid))
-
