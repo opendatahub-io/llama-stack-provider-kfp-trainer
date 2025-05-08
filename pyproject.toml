@@ -1,8 +1,7 @@
 [project]
 dependencies = [
-    # We need main until https://github.com/meta-llama/llama-stack/pull/1672 is released
     # TODO: why are some dependencies like fastapi in [dev]?
-    "llama-stack[dev] @ git+https://github.com/meta-llama/llama-stack.git@main",
+    "llama-stack[dev]>=0.2.5",
     "kfp",
     "torchtune",
 ]
