@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from pathlib import Path
 import os
 
 from kfp import dsl
@@ -76,7 +77,6 @@ def component(
     hyperparam_search_config: dict,
     logger_config: dict,
     model: str,
-    checkpoint_dir: str,
     algorithm_config: dict,
     model_artifact: Input[Artifact],
     output: Output[Artifact],
@@ -157,13 +157,8 @@ def component(
     model_dir = os.path.dirname(model_artifact.path)
 
     dest_dir = os.path.join(model_dir, "model_artifact")
-    # TODO: Though named .gz, the file is actually a tar archive (muh bad!)
-    with tarfile.open(model_artifact.path) as tar:
+    with tarfile.open(model_artifact.path, "r:gz") as tar:
         tar.extractall(path=dest_dir)
-
-    # Ignore passed checkpoint value
-    # TODO: change layout of the tarball and avoid hardcoding the dirname here
-    checkpoint_dir = os.path.join(dest_dir, "Llama3.2-3B-Instruct")
 
     recipe = MyLoraFinetuningSingleDevice(
         data,
@@ -173,7 +168,7 @@ def component(
         hyperparam_search_config,
         logger_config,
         model,
-        checkpoint_dir,
+        dest_dir,
         LoraFinetuningConfig(**algorithm_config),
     )
 
@@ -218,18 +213,22 @@ def pipeline(
     hyperparam_search_config: dict,
     logger_config: dict,
     model: str,
-    checkpoint_dir: str,  # TODO: remove the input argument
     algorithm_config: LoraFinetuningConfig,
 ):
     # TODO: pass it through artifact to avoid issues with size
     data = data[:10]
 
+    # TODO: this sucks, but seems that directory name doesn't match model name?
+    if model.startswith("Llama-"):
+        model = model.replace("Llama-", "Llama")
+
     if config.mode == PipelineMode.LOCAL:
-        artifact_prefix = os.environ["HOME"]
+        artifact_prefix = str(Path(os.environ["HOME"]) / ".llama" / "checkpoints")
     else:
+        # TODO: make bucket configurable
         artifact_prefix = "s3://rhods-dsp-dev"
 
-    fname = "llama3.2-3b-instruct.tar.gz"
+    fname = f"{model}.tar.gz"
     artifact_uri = f"{artifact_prefix}/{fname}"
 
     @dsl.pipeline(name=job_uuid)
@@ -242,7 +241,6 @@ def pipeline(
         hyperparam_search_config: dict = hyperparam_search_config,
         logger_config: dict = logger_config,
         model: str = model,
-        checkpoint_dir: str = checkpoint_dir,
         algorithm_config: dict = _serialize(algorithm_config),
     ) -> Artifact:
         a = dsl.importer(
@@ -258,7 +256,6 @@ def pipeline(
             hyperparam_search_config=hyperparam_search_config,
             logger_config=logger_config,
             model=model,
-            checkpoint_dir=checkpoint_dir,
             algorithm_config=algorithm_config,
             model_artifact=a.output,
         ).output

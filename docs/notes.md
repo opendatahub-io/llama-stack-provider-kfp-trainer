@@ -49,7 +49,8 @@ To access the KFP server, the session token is used. The session token can be
 initialized with `oc login` command as usual.
 
 For the model artifact, the code assumes that it's located at
-`s3://rhods-dsp-dev/llama3.2-3b-instruct.tar.gz`.
+`s3://rhods-dsp-dev/<MODEL_NAME>.tar.gz`. You can use
+`./scripts/upload-model.py` to pack and upload a model to s3.
 
 Since the remote pipeline doesn't have access to dependencies installed with
 `llama-stack`, they are defined (copied) to the component decorator as

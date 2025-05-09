@@ -6,16 +6,35 @@ This provider demonstrates how the same KFP pipeline using `torchtune` can be
 define the training workfload for both local and remote execution.
 
 
-## Prepare environment
+## Prepare virtual environment
 
 ```
 ./scripts/prepare-venv.sh
 ```
 
-## Run llama-stack server
+## Run llama-stack server (local)
 
 ```
-./scripts/run-server.sh
+./scripts/run-local-server.sh
+```
+
+## Run llama-stack server (remote)
+
+```
+./scripts/run-remote-server.sh
+```
+
+## Prepare model files
+
+The model should be present on the system. For `local` mode, use `llama stack
+download` to download llama model checkpoints.
+
+If using `remote`, the downloaded model should then be pushed to s3 bucket. The
+following script assumes that AWS credentials are configured in the
+environment.
+
+```
+./scripts/upload-model.py
 ```
 
 ## Train
@@ -23,3 +42,6 @@ define the training workfload for both local and remote execution.
 ```
 ./scripts/run-training.sh
 ```
+
+Depending on the provider configuration, training will then execute either
+locally via KFP Local subprocess runner or remotely on DSP service.
