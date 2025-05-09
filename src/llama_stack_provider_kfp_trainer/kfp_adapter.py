@@ -6,9 +6,6 @@ from llama_stack.distribution.datatypes import Api
 from llama_stack.providers.inline.post_training.torchtune.post_training import (
     TorchtunePostTrainingImpl,
 )
-from llama_stack.providers.inline.post_training.torchtune.config import (
-    TorchtunePostTrainingConfig,
-)
 from llama_stack.apis.post_training import (
     AlgorithmConfig,
     Checkpoint,
@@ -23,9 +20,10 @@ from llama_stack.apis.post_training import (
 
 from llama_stack.schema_utils import webmethod
 
+from .config import TorchtuneKFPTrainerConfig
 from .scheduler import JobArtifact, Scheduler
 from .scheduler import JobStatus as SchedulerJobStatus
-from .pipeline import pipeline, PipelineMode
+from .pipeline import pipeline
 
 
 class TrainingArtifactType(Enum):
@@ -37,14 +35,10 @@ _JOB_TYPE_SUPERVISED_FINE_TUNE = "supervised-fine-tune"
 
 
 class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        # TODO: make it configurable
-        self._mode = PipelineMode.LOCAL
-        # self._mode = PipelineMode.REMOTE
+    def __init__(self, config: TorchtuneKFPTrainerConfig, *args, **kwargs) -> None:
+        super().__init__(config, *args, **kwargs)
         self._scheduler = Scheduler(
-            backend=f"kfp-{self._mode.value}", to_artifacts=self._to_artifacts
+            backend=f"kfp-{config.mode.value}", to_artifacts=self._to_artifacts
         )
 
     async def shutdown(self) -> None:
@@ -97,7 +91,6 @@ class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
 
         data = await self._get_all_data(training_config.data_config.dataset_id)
         p = pipeline(
-            self._mode,
             self.config,
             data,
             job_uuid,
@@ -183,7 +176,7 @@ class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
         )
 
 
-async def get_adapter_impl(config: TorchtunePostTrainingConfig, _deps):
+async def get_adapter_impl(config: TorchtuneKFPTrainerConfig, _deps):
     return TorchtuneKFPPostTrainingImpl(
         config, _deps[Api.datasetio], _deps[Api.datasets]
     )
