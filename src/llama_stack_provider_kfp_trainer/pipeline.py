@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import enum
 import os
 
 from kfp import dsl
@@ -17,16 +16,10 @@ from llama_stack.apis.post_training import (
 )
 from llama_stack.apis.datatypes import Api
 from llama_stack.distribution.distribution import get_provider_registry
-from llama_stack.providers.inline.post_training.torchtune.config import (
-    TorchtunePostTrainingConfig,
-)
 
+
+from .config import PipelineMode, TorchtuneKFPTrainerConfig
 from .provider import get_provider_spec
-
-
-class PipelineMode(enum.Enum):
-    LOCAL = "local"
-    REMOTE = "remote"
 
 
 def _get_provider_pip_dependencies(
@@ -218,8 +211,7 @@ def _serialize(obj: BaseModel) -> dict:
 # components (with serialization and deserialization offloaded to kfp
 # machinery): https://github.com/kubeflow/pipelines/issues/10690
 def pipeline(
-    mode: PipelineMode,
-    config: TorchtunePostTrainingConfig,
+    config: TorchtuneKFPTrainerConfig,
     data: list[dict],
     job_uuid: str,
     training_config: TrainingConfig,
@@ -232,7 +224,7 @@ def pipeline(
     # TODO: pass it through artifact to avoid issues with size
     data = data[:10]
 
-    if mode == PipelineMode.LOCAL:
+    if config.mode == PipelineMode.LOCAL:
         artifact_prefix = os.environ["HOME"]
     else:
         artifact_prefix = "s3://rhods-dsp-dev"

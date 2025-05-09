@@ -20,7 +20,7 @@ def get_provider_spec() -> ProviderSpec:
                 "kfp",
                 "kubernetes",
             ],
-            config_class="config.TorchtuneKFPPostTrainingConfig",
+            config_class="config.TorchtuneKFPTrainerConfig",
             module="kfp_adapter",
         ),
     )

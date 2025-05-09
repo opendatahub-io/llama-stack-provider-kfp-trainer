@@ -7,7 +7,8 @@ providers:
   post_training:
   - provider_id: kfp-torchtune
     provider_type: remote::kfp-torchtune
-    config: {}
+    config:
+      mode: local
   datasetio:
   - provider_id: huggingface
     provider_type: remote::huggingface
