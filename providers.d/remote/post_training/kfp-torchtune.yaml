@@ -4,4 +4,3 @@ adapter:
   config_class: llama_stack_provider_kfp_trainer.config.TorchtuneKFPTrainerConfig
   module: llama_stack_provider_kfp_trainer
 api_dependencies: ["datasetio", "datasets"]
-optional_api_dependencies: []
