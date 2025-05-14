@@ -3,7 +3,14 @@ dependencies = [
     # TODO: why are some dependencies like fastapi in [dev]?
     "llama-stack[dev]>=0.2.5",
     "kfp",
-    "torchtune",
+    # from upstream torchtune provider
+    "torchtune==0.5.0",
+    "torchao==0.8.0",
+    "torch",
+    "numpy",
+    # TODO: make these optional?
+    "kubernetes",
+    "boto3",
 ]
 
 name = "llama-stack-provider-kfp-trainer"
@@ -13,8 +20,17 @@ readme = "README.md"
 requires-python = ">=3.10" # same as llama-stack
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=70.1.0", "setuptools_scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+  "llama_stack_provider_kfp_trainer",
+]
 
 [tool.mypy]
 disable_error_code = ["import-untyped", "var-annotated"]

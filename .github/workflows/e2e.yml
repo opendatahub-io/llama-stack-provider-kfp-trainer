@@ -8,12 +8,13 @@ on:
 
 jobs:
   start-server:
-    name: Start Server on ${{ matrix.os }}
+    name: Start ${{ matrix.mode }} Server on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        mode: [local, remote]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,9 +28,9 @@ jobs:
         run: |
           ./scripts/prepare-venv.sh
 
-      - name: Start server
+      - name: Start ${{ matrix.mode }} server
         run: |
-          ./scripts/run-server.sh > server.log 2>&1 &
+          ./scripts/run-${{ matrix.mode }}-server.sh > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |

@@ -98,7 +98,6 @@ class TorchtuneKFPPostTrainingImpl(TorchtunePostTrainingImpl):
             hyperparam_search_config,
             logger_config,
             model,
-            checkpoint_dir or "null",
             algorithm_config,
         )
 
