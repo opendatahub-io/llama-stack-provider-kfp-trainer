@@ -1,6 +1,9 @@
 import os
+import sys
 import time
 import uuid
+
+from colorama import Fore, Style
 
 from llama_stack_client import LlamaStackClient
 from llama_stack_client.types import (
@@ -74,14 +77,19 @@ while True:
         break
 
     print(status)
-    if status.status == "completed":
+    if status.status == "completed" or status.status == "failed":
         break
 
     print("Waiting for job to complete...")
     time.sleep(5)
 
 end_time = time.time()
-print("Job completed in", end_time - start_time, "seconds!")
+diff = end_time - start_time
 
-print("Artifacts:")
-print(client.post_training.job.artifacts(job_uuid=job_uuid))
+if status.status == "completed":
+    print(Fore.GREEN + "Job completed successfully in {:.2f} seconds".format(diff) + Style.RESET_ALL)
+    print("Artifacts:")
+    print(client.post_training.job.artifacts(job_uuid=job_uuid))
+else:
+    print(Fore.RED + "Job failed in {:.2f} seconds".format(diff) + Style.RESET_ALL)
+    sys.exit(1)
