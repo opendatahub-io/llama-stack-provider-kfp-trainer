@@ -13,4 +13,4 @@ pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
 # Install some dependencies not pulled by llama-stack for some reason
 pip install aiosqlite fastapi uvicorn
 
-pip install .
+pip install -e .
