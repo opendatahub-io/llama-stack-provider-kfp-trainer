@@ -237,8 +237,7 @@ def pipeline(
         artifact_prefix = str(Path(os.environ["HOME"]) / ".llama" / "checkpoints")
         data_uri = _dump_data(data, job_uuid, artifact_prefix)
     else:
-        # TODO: make bucket configurable
-        artifact_prefix = "s3://rhods-dsp-dev"
+        artifact_prefix = f"s3://{config.s3_bucket}"
         raise NotImplementedError(
             "Passing full dataset to the pipeline is not implemented yet.")
 
