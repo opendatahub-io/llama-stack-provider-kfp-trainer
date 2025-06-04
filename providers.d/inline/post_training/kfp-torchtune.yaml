@@ -1,0 +1,5 @@
+adapter_type: kfp-torchtune
+pip_packages: ["torch", "torchtune==0.5.0", "torchao==0.8.0", "numpy", "kfp", "kubernetes"]
+config_class: llama_stack_provider_kfp_trainer.config.TorchtuneKFPTrainerConfig
+module: llama_stack_provider_kfp_trainer
+api_dependencies: ["datasetio", "datasets"]

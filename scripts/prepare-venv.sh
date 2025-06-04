@@ -10,6 +10,7 @@ pip install --upgrade pip
 # the reference provider is loaded when no telemetry section is configured
 pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
 
-# This dependency doesn't seem to be tracked at all
-pip install aiosqlite
+# Install some dependencies not pulled by llama-stack for some reason
+pip install aiosqlite fastapi uvicorn
+
 pip install .
