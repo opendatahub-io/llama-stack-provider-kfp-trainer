@@ -124,35 +124,41 @@ class _KFPRemoteSchedulerBackend(_KFPSchedulerBackendBase):
         on_artifact_collected_cb: Callable[[JobArtifact], None],
     ) -> None:
         async def do():
-            client = self.get_kfp_client()
-            res = client.create_run_from_pipeline_func(
-                pipeline_func=job.handler,
-                run_name=job.id,
-            )
-            job.provider_id = res.run_id
-            job.status = JobStatus.running
+            try:
+                client = self.get_kfp_client()
+                res = client.create_run_from_pipeline_func(
+                    pipeline_func=job.handler,
+                    run_name=job.id,
+                )
+                job.provider_id = res.run_id
+                job.status = JobStatus.running
 
-            # TODO: extract artifacts... is it possible via REST API?
-            # See: https://github.com/kubeflow/pipelines/issues/9858
-            while not job.completed_at:
-                run = client.get_run(job.provider_id)
+                # TODO: extract artifacts... is it possible via REST API?
+                # See: https://github.com/kubeflow/pipelines/issues/9858
+                while not job.completed_at:
+                    run = client.get_run(job.provider_id)
 
-                # Revisit the map between states in KFP and LLS
-                match run.state:
-                    # TODO: are there enums for the states?
-                    case "SUCCEEDED":
-                        on_status_change_cb(JobStatus.completed)
-                    case "FAILED" | "CANCELED" | "SKIPPED":
-                        on_status_change_cb(JobStatus.failed)
-                    case "RUNNING":
-                        logger.info(
-                            f"Job {job.id} (kfp: {job.provider_id}) is still running"
-                        )
-                    case _:
-                        logger.warning(f"Unhandled run state: {run.state}")
+                    # Revisit the map between states in KFP and LLS
+                    match run.state:
+                        # TODO: are there enums for the states?
+                        case "SUCCEEDED":
+                            on_status_change_cb(JobStatus.completed)
+                        case "FAILED" | "CANCELED" | "SKIPPED":
+                            on_status_change_cb(JobStatus.failed)
+                        case "RUNNING":
+                            logger.info(
+                                f"Job {job.id} (kfp: {job.provider_id}) is still running"
+                            )
+                        case _:
+                            logger.warning(f"Unhandled run state: {run.state}")
 
-                # TODO: is there a better way to wait for the job to finish without polling?
-                await asyncio.sleep(5)
+                    # TODO: is there a better way to wait for the job to finish without polling?
+                    await asyncio.sleep(5)
+            except Exception as e:
+                job.status = JobStatus.failed
+                on_log_message_cb(str(e))
+                logger.exception(f"Job {job.id} failed.")
+                raise
 
         asyncio.run_coroutine_threadsafe(do(), self._loop)
 
