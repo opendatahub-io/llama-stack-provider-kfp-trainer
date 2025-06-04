@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import json
 from pathlib import Path
 import os
 
@@ -71,7 +72,7 @@ def lls_component(api_type: Api, provider_name: str | None = None):
 @lls_component(Api.post_training, "kfp-torchtune")
 def component(
     config: dict,
-    data: list,  # should be an Input?
+    data_artifact: Input[Artifact],
     job_uuid: str,
     training_config: dict,
     hyperparam_search_config: dict,
@@ -150,6 +151,12 @@ def component(
 
     #### End of monkey patching
 
+    # Extract data from passed artifact
+    import json
+    with open(data_artifact.path) as f:
+        data = json.load(f)
+        print(f"Loaded {len(data)} rows of data from {data_artifact.path}")
+
     # Extract checkpoint from passed artifact
     import os
     import tarfile
@@ -202,6 +209,13 @@ def _serialize(obj: BaseModel) -> dict:
     return obj.model_dump(exclude_none=True, mode="json")
 
 
+def _dump_data(data: list[dict], job_uuid: str, root_dir: str) -> str:
+    data_path = Path(root_dir) / f"{job_uuid}_data.json"
+    with open(data_path, "w") as f:
+        json.dump(data, f, indent=2)
+    return str(data_path)
+
+
 # TODO: it would be nice if we could pass pydantic models transparently between
 # components (with serialization and deserialization offloaded to kfp
 # machinery): https://github.com/kubeflow/pipelines/issues/10690
@@ -215,18 +229,18 @@ def pipeline(
     model: str,
     algorithm_config: LoraFinetuningConfig,
 ):
-    # TODO: pass it through artifact to avoid issues with size
-    data = data[:10]
-
     # TODO: this sucks, but seems that directory name doesn't match model name?
     if model.startswith("Llama-"):
         model = model.replace("Llama-", "Llama")
 
     if config.mode == PipelineMode.LOCAL:
         artifact_prefix = str(Path(os.environ["HOME"]) / ".llama" / "checkpoints")
+        data_uri = _dump_data(data, job_uuid, artifact_prefix)
     else:
         # TODO: make bucket configurable
         artifact_prefix = "s3://rhods-dsp-dev"
+        raise NotImplementedError(
+            "Passing full dataset to the pipeline is not implemented yet.")
 
     fname = f"{model}.tar.gz"
     artifact_uri = f"{artifact_prefix}/{fname}"
@@ -235,7 +249,7 @@ def pipeline(
     def p(
         artifact_uri: str = artifact_uri,
         config: dict = _serialize(config),
-        data: list = data,
+        data_uri: str = data_uri,
         job_uuid: str = job_uuid,
         training_config: dict = _serialize(training_config),
         hyperparam_search_config: dict = hyperparam_search_config,
@@ -248,9 +262,14 @@ def pipeline(
             artifact_class=dsl.Model,
         )
 
+        data = dsl.importer(
+            artifact_uri=data_uri,
+            artifact_class=dsl.Dataset,
+        )
+
         return component(
             config=config,
-            data=data,
+            data_artifact=data.output,
             job_uuid=job_uuid,
             training_config=training_config,
             hyperparam_search_config=hyperparam_search_config,
