@@ -16,4 +16,4 @@ class TorchtuneKFPTrainerConfig(TorchtunePostTrainingConfig):
     """
 
     mode: PipelineMode = PipelineMode.LOCAL
-    s3_bucket: str = "rhods-dsp-dev"
+    s3_bucket: str
