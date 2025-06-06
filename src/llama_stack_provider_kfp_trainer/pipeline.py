@@ -221,6 +221,19 @@ def _dump_data(data: list[dict], job_uuid: str, root_dir: str) -> str:
     return str(data_path)
 
 
+def _upload_data_to_s3(data: list[dict], job_uuid: str, s3_bucket: str) -> str:
+    from .s3 import Client
+    import uuid as _uuid
+
+    local_data_path = _dump_data(data, job_uuid, "/tmp")
+    dataset_object_name = f"{job_uuid}_data_{_uuid.uuid4().hex}.json"
+
+    s3_client = Client(s3_bucket)
+    s3_client.upload(Path(local_data_path), dataset_object_name)
+
+    return f"s3://{s3_bucket}/{dataset_object_name}"
+
+
 # TODO: it would be nice if we could pass pydantic models transparently between
 # components (with serialization and deserialization offloaded to kfp
 # machinery): https://github.com/kubeflow/pipelines/issues/10690
@@ -243,9 +256,8 @@ def pipeline(
         data_uri = _dump_data(data, job_uuid, artifact_prefix)
         use_gpu = False
     else:
+        data_uri = _upload_data_to_s3(data, job_uuid, config.s3_bucket)
         artifact_prefix = f"s3://{config.s3_bucket}"
-        # TODO: upload
-        data_uri = f"{artifact_prefix}/fake.json"
         use_gpu = getattr(config, "use_gpu", False)
 
     fname = f"{model}.tar.gz"
