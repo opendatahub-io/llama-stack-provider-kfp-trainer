@@ -43,7 +43,6 @@ def _get_provider_pip_dependencies(
 
     # drop unnecessary dependencies
     # TODO: make it more generic / separate scheduler deps?
-    deps.remove("kfp")
     deps.remove("kubernetes")
 
     return deps

@@ -1,7 +1,7 @@
 [project]
 dependencies = [
     "llama-stack>=0.2.5",
-    "kfp",
+    "kfp==2.9.0",
     # from upstream torchtune provider
     "torchtune==0.5.0",
     "torchao==0.8.0",
