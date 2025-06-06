@@ -9,6 +9,7 @@ providers:
     provider_type: remote::kfp-torchtune
     config:
       mode: local
+      s3_bucket: ${env.KFP_S3_BUCKET:rhods-dsp-dev}
   datasetio:
   - provider_id: huggingface
     provider_type: remote::huggingface

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from argparse import ArgumentParser
-import sys
+import os
 from pathlib import Path
+import sys
 import tarfile
 
 from llama_stack_provider_kfp_trainer.s3 import Client
@@ -13,7 +14,7 @@ parser = ArgumentParser(description="Upload model to S3 bucket.")
 parser.add_argument(
     "--bucket",
     type=str,
-    default="rhods-dsp-dev",
+    default=os.environ.get("KFP_S3_BUCKET", "rhods-dsp-dev"),
     help="S3 bucket name",
 )
 parser.add_argument(
