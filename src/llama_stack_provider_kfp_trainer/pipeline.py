@@ -61,7 +61,7 @@ def lls_component(api_type: Api, provider_name: str | None = None):
                 packages_to_install=_get_provider_pip_dependencies(
                     api_type, provider_name
                 ),
-            )(*args, **kwargs)
+            )(*args, **kwargs).set_memory_limit("8Gi")
 
         return wrapper
 
