@@ -237,8 +237,8 @@ def pipeline(
         data_uri = _dump_data(data, job_uuid, artifact_prefix)
     else:
         artifact_prefix = f"s3://{config.s3_bucket}"
-        raise NotImplementedError(
-            "Passing full dataset to the pipeline is not implemented yet.")
+        # TODO: upload
+        data_uri = f"{artifact_prefix}/fake.json"
 
     fname = f"{model}.tar.gz"
     artifact_uri = f"{artifact_prefix}/{fname}"
