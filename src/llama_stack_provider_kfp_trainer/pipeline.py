@@ -50,26 +50,32 @@ def _get_provider_pip_dependencies(
 
 # TODO: we should probably have a container image with all dependencies pre-built
 _BASE_IMAGE = "quay.io/fedora/python-311:311"
+_ACCELERATOR_TYPE = "nvidia.com/gpu"
 
 
-def lls_component(api_type: Api, provider_name: str | None = None):
+def lls_component(api_type: Api, provider_name: str | None = None, use_gpu: bool = False):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            return dsl.component(
+            component_obj = dsl.component(
                 base_image=_BASE_IMAGE,
                 func=func,
                 packages_to_install=_get_provider_pip_dependencies(
                     api_type, provider_name
                 ),
             )(*args, **kwargs).set_memory_limit("8Gi")
+            if use_gpu:
+                component_obj = component_obj.set_accelerator_limit(1).set_accelerator_type(_ACCELERATOR_TYPE)
+            return component_obj
 
         return wrapper
 
     return decorator
 
 
-@lls_component(Api.post_training, "kfp-torchtune")
-def component(
+def get_component(use_gpu: bool):
+    return lls_component(Api.post_training, "kfp-torchtune", use_gpu=use_gpu)(component_impl)
+
+def component_impl(
     config: dict,
     data_artifact: Input[Artifact],
     job_uuid: str,
@@ -235,13 +241,17 @@ def pipeline(
     if config.mode == PipelineMode.LOCAL:
         artifact_prefix = str(Path(os.environ["HOME"]) / ".llama" / "checkpoints")
         data_uri = _dump_data(data, job_uuid, artifact_prefix)
+        use_gpu = False
     else:
         artifact_prefix = f"s3://{config.s3_bucket}"
         # TODO: upload
         data_uri = f"{artifact_prefix}/fake.json"
+        use_gpu = getattr(config, "use_gpu", False)
 
     fname = f"{model}.tar.gz"
     artifact_uri = f"{artifact_prefix}/{fname}"
+
+    component = get_component(use_gpu)
 
     @dsl.pipeline(name=job_uuid)
     def p(

@@ -10,6 +10,7 @@ providers:
     config:
       mode: local
       s3_bucket: ${env.KFP_S3_BUCKET:rhods-dsp-dev}
+      use_gpu: ${env.USE_GPU:False}
   datasetio:
   - provider_id: huggingface
     provider_type: remote::huggingface

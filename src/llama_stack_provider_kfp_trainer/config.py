@@ -17,3 +17,4 @@ class TorchtuneKFPTrainerConfig(TorchtunePostTrainingConfig):
 
     mode: PipelineMode = PipelineMode.LOCAL
     s3_bucket: str
+    use_gpu: bool = False  # If True, enable GPU for remote training. Default: CPU only.
