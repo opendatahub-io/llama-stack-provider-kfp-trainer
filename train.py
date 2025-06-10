@@ -87,7 +87,11 @@ end_time = time.time()
 diff = end_time - start_time
 
 if status.status == "completed":
-    print(Fore.GREEN + "Job completed successfully in {:.2f} seconds".format(diff) + Style.RESET_ALL)
+    print(
+        Fore.GREEN
+        + "Job completed successfully in {:.2f} seconds".format(diff)
+        + Style.RESET_ALL
+    )
     print("Artifacts:")
     print(client.post_training.job.artifacts(job_uuid=job_uuid))
 else:
