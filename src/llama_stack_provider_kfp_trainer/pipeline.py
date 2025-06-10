@@ -24,9 +24,10 @@ from .config import PipelineMode, TorchtuneKFPTrainerConfig
 from .provider import get_provider_spec
 
 
-def _get_provider_pip_dependencies(
-    api_type: Api, provider_name: str | None = None
-) -> list[str]:
+_ACCELERATOR_TYPE = "nvidia.com/gpu"
+
+
+def _get_provider_pip_dependencies(api_type: Api, provider_name: str) -> list[str]:
     deps = [
         # TODO: how to achieve identical llama-stack code on both sides?
         "git+https://github.com/meta-llama/llama-stack.git@main#egg=llama-stack",
@@ -38,7 +39,7 @@ def _get_provider_pip_dependencies(
         },
     }
     for name, spec in provider_registry[api_type].items():
-        if provider_name is None or name == provider_name:
+        if name == provider_name:
             deps += spec.pip_packages
 
     # drop unnecessary dependencies
@@ -48,23 +49,26 @@ def _get_provider_pip_dependencies(
     return deps
 
 
-# TODO: we should probably have a container image with all dependencies pre-built
-_BASE_IMAGE = "quay.io/fedora/python-311:311"
-_ACCELERATOR_TYPE = "nvidia.com/gpu"
-
-
-def lls_component(api_type: Api, provider_name: str | None = None, use_gpu: bool = False):
+def lls_component(
+    config: TorchtuneKFPTrainerConfig,
+    api_type: Api,
+    provider_name: str,
+    use_gpu: bool = False,
+):
     def decorator(func):
         def wrapper(*args, **kwargs):
+            base_image = config.base_image
             component_obj = dsl.component(
-                base_image=_BASE_IMAGE,
+                base_image=base_image,
                 func=func,
                 packages_to_install=_get_provider_pip_dependencies(
                     api_type, provider_name
                 ),
             )(*args, **kwargs).set_memory_limit("8Gi")
             if use_gpu:
-                component_obj = component_obj.set_accelerator_limit(1).set_accelerator_type(_ACCELERATOR_TYPE)
+                component_obj = component_obj.set_accelerator_limit(
+                    1
+                ).set_accelerator_type(_ACCELERATOR_TYPE)
             return component_obj
 
         return wrapper
@@ -72,8 +76,11 @@ def lls_component(api_type: Api, provider_name: str | None = None, use_gpu: bool
     return decorator
 
 
-def get_component(use_gpu: bool):
-    return lls_component(Api.post_training, "kfp-torchtune", use_gpu=use_gpu)(component_impl)
+def get_component(config: TorchtuneKFPTrainerConfig, use_gpu: bool):
+    return lls_component(config, Api.post_training, "kfp-torchtune", use_gpu=use_gpu)(
+        component_impl
+    )
+
 
 def component_impl(
     config: dict,
@@ -158,6 +165,7 @@ def component_impl(
 
     # Extract data from passed artifact
     import json
+
     with open(data_artifact.path) as f:
         data = json.load(f)
         print(f"Loaded {len(data)} rows of data from {data_artifact.path}")
@@ -263,7 +271,7 @@ def pipeline(
     fname = f"{model}.tar.gz"
     artifact_uri = f"{artifact_prefix}/{fname}"
 
-    component = get_component(use_gpu)
+    component = get_component(config, use_gpu)
 
     @dsl.pipeline(name=job_uuid)
     def p(

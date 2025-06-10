@@ -1,0 +1,36 @@
+# Ignore Python cache and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+dist/
+build/
+.env
+.venv
+venv/
+ENV/
+env/
+# Ignore git and editor files
+.git
+.gitignore
+.github
+*.swp
+*.swo
+*.bak
+*.tmp
+# Ignore test and documentation files
+tests/
+docs/
+# Ignore local scripts and configs not needed in container
+scripts/
+shell.nix
+tox.ini
+# Ignore model checkpoints and data
+*.ckpt
+*.pth
+*.tar.gz
+*.log
+# Ignore OS files
+.DS_Store
