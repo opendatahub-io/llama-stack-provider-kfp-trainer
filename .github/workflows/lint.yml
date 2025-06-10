@@ -24,3 +24,12 @@ jobs:
 
       - name: Run tox lint
         run: tox -e lint
+
+      - name: Fail if git state is dirty after lint
+        run: |
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            echo "ERROR: Linting produced changes. Please commit them."
+            git status
+            git --no-pager diff
+            exit 1
+          fi
