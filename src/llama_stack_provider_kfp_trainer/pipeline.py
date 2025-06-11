@@ -64,7 +64,7 @@ def lls_component(
                 packages_to_install=_get_provider_pip_dependencies(
                     api_type, provider_name
                 ),
-            )(*args, **kwargs).set_memory_limit("8Gi")
+            )(*args, **kwargs).set_memory_limit("16Gi")
             if use_gpu:
                 component_obj = component_obj.set_accelerator_limit(
                     1
