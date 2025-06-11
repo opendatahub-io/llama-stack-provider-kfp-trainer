@@ -78,11 +78,11 @@ def lls_component(
 
 def get_component(config: TorchtuneKFPTrainerConfig, use_gpu: bool):
     return lls_component(config, Api.post_training, "kfp-torchtune", use_gpu=use_gpu)(
-        component_impl
+        train
     )
 
 
-def component_impl(
+def train(
     config: dict,
     data_artifact: Input[Artifact],
     job_uuid: str,
