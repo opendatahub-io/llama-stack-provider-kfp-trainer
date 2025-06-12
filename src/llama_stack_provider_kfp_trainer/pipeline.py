@@ -64,7 +64,7 @@ def lls_component(
                 packages_to_install=_get_provider_pip_dependencies(
                     api_type, provider_name
                 ),
-            )(*args, **kwargs).set_memory_limit("8Gi")
+            )(*args, **kwargs).set_memory_limit("16Gi")
             if use_gpu:
                 component_obj = component_obj.set_accelerator_limit(
                     1
@@ -78,11 +78,11 @@ def lls_component(
 
 def get_component(config: TorchtuneKFPTrainerConfig, use_gpu: bool):
     return lls_component(config, Api.post_training, "kfp-torchtune", use_gpu=use_gpu)(
-        component_impl
+        train
     )
 
 
-def component_impl(
+def train(
     config: dict,
     data_artifact: Input[Artifact],
     job_uuid: str,
