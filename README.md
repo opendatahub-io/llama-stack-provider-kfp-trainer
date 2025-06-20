@@ -45,3 +45,7 @@ environment.
 
 Depending on the provider configuration, training will then execute either
 locally via KFP Local subprocess runner or remotely on DSP service.
+
+## Implementation
+
+You can find some development notes in the [docs](docs/) directory.
